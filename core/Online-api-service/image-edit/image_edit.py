@@ -20,7 +20,7 @@ class ImageEditNode:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": {"api_key":("API_KEY",), "base_url":("BASE_URL",), "模型": ("MODEL_NAME",), "图像":("IMAGE",), "编辑指令":("STRING", {"multiline": True}), "返回格式":(["url", "b64_json"],),}}
-    RETURN_TYPES = ("IMAGE", "STRING",); RETURN_NAMES = ("图像", "图片URL",); FUNCTION = "edit_image"; CATEGORY = "Magic Nodes/Image"
+    RETURN_TYPES = ("IMAGE", "STRING",); RETURN_NAMES = ("图像", "图片URL",); FUNCTION = "edit_image"; CATEGORY = "AFA/图像"
     def edit_image(self, api_key, base_url, 模型, 图像, 编辑指令, 返回格式):
         if not all([api_key, base_url, 图像 is not None, 编辑指令]): return (None, "Error: Missing required inputs.")
         endpoint_url = base_url.rstrip('/') + "/v1/images/edits"

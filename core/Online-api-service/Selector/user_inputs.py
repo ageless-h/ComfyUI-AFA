@@ -34,7 +34,7 @@ class WorldbuildingUserInputNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("user_prompt",)
     FUNCTION = "build"
-    CATEGORY = "Magic Nodes/User Inputs"
+    CATEGORY = "AFA/输入"
     
     def build(self, **kwargs):
         return format_user_prompt("世界观构建", **kwargs)
@@ -52,7 +52,7 @@ class CharacterUserInputNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("user_prompt",)
     FUNCTION = "build"
-    CATEGORY = "Magic Nodes/User Inputs"
+    CATEGORY = "AFA/输入"
 
     def build(self, **kwargs):
         return format_user_prompt("角色档案构建", **kwargs)
@@ -70,7 +70,7 @@ class SaveTheCatUserInputNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("user_prompt",)
     FUNCTION = "build"
-    CATEGORY = "Magic Nodes/User Inputs"
+    CATEGORY = "AFA/输入"
 
     def build(self, **kwargs):
         return format_user_prompt("救猫咪结构", **kwargs)
@@ -89,7 +89,7 @@ class ScreenwriterUserInputNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("user_prompt",)
     FUNCTION = "build"
-    CATEGORY = "Magic Nodes/User Inputs"
+    CATEGORY = "AFA/输入"
 
     def build(self, **kwargs):
         return format_user_prompt("剧本场景撰写", **kwargs)
@@ -106,7 +106,7 @@ class StoryboardUserInputNode:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("user_prompt",)
     FUNCTION = "build"
-    CATEGORY = "Magic Nodes/User Inputs"
+    CATEGORY = "AFA/输入"
 
     def build(self, **kwargs):
         return format_user_prompt("分镜设计", **kwargs) 

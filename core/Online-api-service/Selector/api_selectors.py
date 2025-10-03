@@ -25,13 +25,13 @@ SYSTEM_PROMPTS_DATA = utils.SYSTEM_PROMPTS_DATA
 # 专用选择器节点
 # -------------------------------------------------------------------
 class APIKeySelectorNode(GenericSelectorNode):
-    _data_source = CONFIG_DATA; _config_key = "api_keys"; RETURN_TYPES = ("API_KEY",); RETURN_NAMES = ("api_key",); CATEGORY = "Magic Nodes/LLM Config"
+    _data_source = CONFIG_DATA; _config_key = "api_keys"; RETURN_TYPES = ("API_KEY",); RETURN_NAMES = ("api_key",); CATEGORY = "AFA/config"
 
 class BaseURLSelectorNode(GenericSelectorNode):
-    _data_source = CONFIG_DATA; _config_key = "base_urls"; RETURN_TYPES = ("BASE_URL",); RETURN_NAMES = ("base_url",); CATEGORY = "Magic Nodes/LLM Config"
+    _data_source = CONFIG_DATA; _config_key = "base_urls"; RETURN_TYPES = ("BASE_URL",); RETURN_NAMES = ("base_url",); CATEGORY = "AFA/config"
 
 class ModelNameSelectorNode(GenericSelectorNode):
-    _data_source = CONFIG_DATA; _config_key = "model_names"; RETURN_TYPES = ("MODEL_NAME",); RETURN_NAMES = ("model_name",); CATEGORY = "Magic Nodes/LLM Config"
+    _data_source = CONFIG_DATA; _config_key = "model_names"; RETURN_TYPES = ("MODEL_NAME",); RETURN_NAMES = ("model_name",); CATEGORY = "AFA/config"
 
 class SystemPromptSelectorNode(GenericSelectorNode):
-    _data_source = SYSTEM_PROMPTS_DATA; _config_key = None; RETURN_TYPES = ("STRING",); RETURN_NAMES = ("system_prompt",); CATEGORY = "Magic Nodes/LLM Prompts" 
+    _data_source = SYSTEM_PROMPTS_DATA; _config_key = None; RETURN_TYPES = ("STRING",); RETURN_NAMES = ("system_prompt",); CATEGORY = "AFA/config" 

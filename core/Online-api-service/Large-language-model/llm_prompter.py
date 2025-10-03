@@ -9,7 +9,7 @@ class UltimateLLMPrompterNode:
     def IS_CHANGED(s, **kwargs): return time.time()
     @classmethod
     def INPUT_TYPES(s): return {"required": {"api_key":("API_KEY",), "base_url":("BASE_URL",), "model_name":("MODEL_NAME",),"system_prompt":("STRING", {"forceInput": True}), "user_prompt":("STRING", {"forceInput": True}),"seed":("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),"max_attempts":("INT", {"default": 3, "min": 1, "max": 10}),"retry_delay":("FLOAT", {"default": 2.0, "min": 0.0, "max": 60.0, "step": 0.5}),}}
-    RETURN_TYPES = ("STRING",); RETURN_NAMES = ("generated_text",); FUNCTION = "generate_text"; CATEGORY = "Magic Nodes/LLM"
+    RETURN_TYPES = ("STRING",); RETURN_NAMES = ("generated_text",); FUNCTION = "generate_text"; CATEGORY = "AFA/大模型"
     def generate_text(self, api_key, base_url, model_name, system_prompt, user_prompt, seed, max_attempts, retry_delay):
         if not all([api_key, base_url, model_name, system_prompt, user_prompt]): return ("Error: One or more required inputs are missing.",)
         if user_prompt.startswith("Error:"): return(user_prompt,)

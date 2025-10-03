@@ -21,7 +21,7 @@ class UltimateVLMPrompterNode:
     def IS_CHANGED(s, **kwargs): return time.time()
     @classmethod
     def INPUT_TYPES(s): return {"required": {"api_key":("API_KEY",), "base_url":("BASE_URL",), "model_name":("MODEL_NAME",),"image":("IMAGE",),"text_prompt":("STRING", {"multiline": True}),"seed":("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),"max_attempts":("INT", {"default": 3, "min": 1, "max": 10}),"retry_delay":("FLOAT", {"default": 2.0, "min": 0.0, "max": 60.0, "step": 0.5}),},"optional": {"system_prompt": ("STRING", {"forceInput": True}),}}
-    RETURN_TYPES = ("STRING",); RETURN_NAMES = ("generated_text",); FUNCTION = "generate_vlm_text"; CATEGORY = "Magic Nodes/LLM"
+    RETURN_TYPES = ("STRING",); RETURN_NAMES = ("generated_text",); FUNCTION = "generate_vlm_text"; CATEGORY = "AFA/大模型"
     def generate_vlm_text(self, api_key, base_url, model_name, image, text_prompt, seed, max_attempts, retry_delay, system_prompt=None):
         if not all([api_key, base_url, model_name, image is not None, text_prompt]): return ("Error: One or more required inputs are missing.",)
         client = openai.OpenAI(api_key=api_key, base_url=base_url)

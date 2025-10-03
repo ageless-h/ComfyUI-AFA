@@ -14,13 +14,13 @@ USER_PROMPTS_PATH = os.path.join(NODE_DIR, "config", "user_prompts.json")
 def load_json_config(file_path, file_description):
     """一个通用的JSON文件加载函数，带有清晰的错误提示"""
     if not os.path.exists(file_path):
-        print(f"!!! [Magic Nodes] {file_description} file not found. Please create it at: {file_path}")
+        print(f"!!! [AFA] {file_description} file not found. Please create it at: {file_path}")
         return {}
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        print(f"!!! [Magic Nodes] Error loading {file_description} from {file_path}: {e}")
+        print(f"!!! [AFA] Error loading {file_description} from {file_path}: {e}")
         return {}
 
 CONFIG_DATA = load_json_config(CONFIG_PATH, "Core Config")
@@ -33,7 +33,7 @@ USER_PROMPTS_DATA = load_json_config(USER_PROMPTS_PATH, "User Prompt Templates")
 def import_module_from_path(module_name, file_path):
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     if spec is None:
-        print(f"!!! [Magic Nodes] Could not find module at {file_path}")
+        print(f"!!! [AFA] Could not find module at {file_path}")
         return None
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
@@ -68,6 +68,12 @@ image_edit = import_module_from_path(
     os.path.join(NODE_DIR, "core", "Online-api-service", "image-edit", "image_edit.py")
 )
 
+# 导入音乐模块
+suno_generator = import_module_from_path(
+    "suno_generator",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_generator.py")
+)
+
 # 从模块中获取类
 APIKeySelectorNode = api_selectors.APIKeySelectorNode
 BaseURLSelectorNode = api_selectors.BaseURLSelectorNode
@@ -84,6 +90,9 @@ UltimateLLMPrompterNode = llm_prompter.UltimateLLMPrompterNode
 UltimateVLMPrompterNode = vlm_prompter.UltimateVLMPrompterNode
 ImageEditNode = image_edit.ImageEditNode
 
+# 音乐API节点
+SunoGeneratorNode = suno_generator.SunoGeneratorNode
+
 # -------------------------------------------------------------------
 # 注册所有节点到 ComfyUI
 # -------------------------------------------------------------------
@@ -94,6 +103,8 @@ NODE_CLASS_MAPPINGS = {
     "SaveTheCatUserInput": SaveTheCatUserInputNode, "ScreenwriterUserInput": ScreenwriterUserInputNode,
     "StoryboardUserInput": StoryboardUserInputNode, "UltimateLLMPrompter": UltimateLLMPrompterNode,
     "UltimateVLMPrompter": UltimateVLMPrompterNode, "ImageEditNode": ImageEditNode,
+    # 音乐API节点
+    "SunoGenerator": SunoGeneratorNode,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "APIKeySelector": "API Key Selector", "BaseURLSelector": "Base URL Selector",
@@ -102,4 +113,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "SaveTheCatUserInput": "用户输入: 救猫咪结构", "ScreenwriterUserInput": "用户输入: 剧本场景",
     "StoryboardUserInput": "用户输入: 分镜设计", "UltimateLLMPrompter": "LLM Prompter (All-in-One)",
     "UltimateVLMPrompter": "VLM Prompter (All-in-One)", "ImageEditNode": "图像编辑 (Nano-banana)",
+    # 音乐API节点显示名称
+    "SunoGenerator": "Suno音乐生成器",
 }
