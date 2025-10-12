@@ -1,5 +1,6 @@
-# 排除config文件夹中的文件
+# 排除config文件夹中的个人配置文件，但保留样例文件
 config/*.json
+!config/*.json.example
 
 # Python缓存文件
 __pycache__/
@@ -25,4 +26,4 @@ ENV/
 
 # 操作系统生成的文件
 .DS_Store
-Thumbs.db 
+Thumbs.db

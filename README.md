@@ -36,6 +36,22 @@ git clone https://github.com/ageless-h/ComfyUI-AFA.git
 2. `system_prompts.json`：系统提示词模板
 3. `user_prompts.json`：用户提示词模板
 
+### 快速配置
+
+项目提供了配置文件样例，您可以直接复制并修改：
+
+```bash
+# 进入config目录
+cd config/
+
+# 复制样例文件并重命名
+cp config.json.example config.json
+cp system_prompts.json.example system_prompts.json
+cp user_prompts.json.example user_prompts.json
+
+# 然后编辑这些文件，填入您的实际配置
+```
+
 ### 配置文件示例
 
 #### config.json
@@ -71,6 +87,12 @@ git clone https://github.com/ageless-h/ComfyUI-AFA.git
   "模板名称2": "模板内容2 {参数A} {参数B}"
 }
 ```
+
+### 配置文件安全说明
+
+- **个人配置文件**（`*.json`）已被添加到`.gitignore`中，不会被上传到Git仓库，保护您的API密钥等敏感信息
+- **样例文件**（`*.json.example`）会被包含在项目中，为新用户提供配置参考
+- 建议定期检查和更新您的API密钥，确保账户安全
 
 ## 节点说明
 

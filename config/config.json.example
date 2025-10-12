@@ -1,0 +1,22 @@
+{
+  "api_keys": {
+    "硅基流动": "your_siliconflow_api_key_here",
+    "t8": "your_t8_api_key_here",
+    "OpenAI": "your_openai_api_key_here",
+    "其他服务商": "your_other_api_key_here"
+  },
+  "base_urls": {
+    "硅基流动": "https://api.siliconflow.cn/v1/",
+    "t8": "https://api.t8.ai/v1/",
+    "OpenAI": "https://api.openai.com/v1/",
+    "其他服务商": "https://your-custom-api-url.com/v1/"
+  },
+  "model_names": {
+    "GPT-4": "gpt-4",
+    "GPT-3.5": "gpt-3.5-turbo",
+    "Claude-3": "claude-3-sonnet-20240229",
+    "Qwen": "qwen-max",
+    "GLM": "glm-4",
+    "自定义模型": "your-custom-model-name"
+  }
+}
