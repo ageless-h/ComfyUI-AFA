@@ -1,2 +1,5 @@
 openai
 requests
+torch
+numpy
+Pillow

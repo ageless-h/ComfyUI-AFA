@@ -74,6 +74,62 @@ suno_generator = import_module_from_path(
     os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_generator.py")
 )
 
+# 导入2D动画工具模块 - LayerEdit
+create_blank_document = import_module_from_path(
+    "create_blank_document",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Create_blank_document.py")
+)
+obtain_document_information = import_module_from_path(
+    "obtain_document_information",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Obtain_document_information.py")
+)
+get_layer_from_document = import_module_from_path(
+    "get_layer_from_document",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Get_layer_from_document.py")
+)
+get_layer_list_from_document = import_module_from_path(
+    "get_layer_list_from_document",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Get_layer_list_from_document.py")
+)
+unpack_layer = import_module_from_path(
+    "unpack_layer",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Unpack_layer.py")
+)
+
+update_layer = import_module_from_path(
+    "update_layer",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Update_layer.py")
+)
+delete_layer = import_module_from_path(
+    "delete_layer",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Delete_layer.py")
+)
+add_layer_to_document = import_module_from_path(
+    "add_layer_to_document",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Add_layer_to_document.py")
+)
+get_layer_info = import_module_from_path(
+    "get_layer_info",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Get_layer_info.py")
+)
+create_layer = import_module_from_path(
+    "create_layer",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerEdit", "Create_layer.py")
+)
+
+# 2D动画工具节点 - LayerUtils
+preview_document = import_module_from_path(
+    "preview_document",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerUtils", "Preview_document.py")
+)
+preview_layer = import_module_from_path(
+    "preview_layer",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerUtils", "Preview_layer.py")
+)
+
+
+
+
 # 从模块中获取类
 APIKeySelectorNode = api_selectors.APIKeySelectorNode
 BaseURLSelectorNode = api_selectors.BaseURLSelectorNode
@@ -93,6 +149,22 @@ ImageEditNode = image_edit.ImageEditNode
 # 音乐API节点
 SunoGeneratorNode = suno_generator.SunoGeneratorNode
 
+# 2D动画工具节点 - LayerEdit
+CreateBlankDocumentNode = create_blank_document.CreateBlankDocumentNode
+ObtainDocumentInformationNode = obtain_document_information.ObtainDocumentInformationNode
+GetLayerFromDocumentNode = get_layer_from_document.GetLayerFromDocumentNode
+GetLayerListFromDocumentNode = get_layer_list_from_document.GetLayerListFromDocumentNode
+UnpackLayerNode = unpack_layer.UnpackLayerNode
+UpdateLayerNode = update_layer.UpdateLayerNode
+DeleteLayerNode = delete_layer.DeleteLayerNode
+AddLayerToDocumentNode = add_layer_to_document.AddLayerToDocumentNode
+GetLayerInfoNode = get_layer_info.GetLayerInfoNode
+CreateLayerNode = create_layer.CreateLayerNode
+
+# 2D动画工具节点 - LayerUtils
+PreviewDocumentNode = preview_document.PreviewDocumentNode
+PreviewLayerNode = preview_layer.PreviewLayerNode
+
 # -------------------------------------------------------------------
 # 注册所有节点到 ComfyUI
 # -------------------------------------------------------------------
@@ -105,6 +177,20 @@ NODE_CLASS_MAPPINGS = {
     "UltimateVLMPrompter": UltimateVLMPrompterNode, "ImageEditNode": ImageEditNode,
     # 音乐API节点
     "SunoGenerator": SunoGeneratorNode,
+    # 2D动画工具节点 - LayerEdit
+    "CreateBlankDocument": CreateBlankDocumentNode,
+    "ObtainDocumentInformation": ObtainDocumentInformationNode,
+    "GetLayerFromDocument": GetLayerFromDocumentNode,
+    "GetLayerListFromDocument": GetLayerListFromDocumentNode,
+    "UnpackLayer": UnpackLayerNode,
+    "UpdateLayer": UpdateLayerNode,
+    "DeleteLayer": DeleteLayerNode,
+    "AddLayerToDocument": AddLayerToDocumentNode,
+    "GetLayerInfo": GetLayerInfoNode,
+    "CreateLayer": CreateLayerNode,
+    # 2D动画工具节点 - LayerUtils
+    "PreviewDocument": PreviewDocumentNode,
+    "PreviewLayer": PreviewLayerNode,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "APIKeySelector": "API Key Selector", "BaseURLSelector": "Base URL Selector",
@@ -115,4 +201,18 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UltimateVLMPrompter": "VLM Prompter (All-in-One)", "ImageEditNode": "图像编辑 (Nano-banana)",
     # 音乐API节点显示名称
     "SunoGenerator": "Suno音乐生成器",
+    # 2D动画工具节点显示名称 - LayerEdit
+    "CreateBlankDocument": "创建空白文档",
+    "ObtainDocumentInformation": "获取文档信息",
+    "GetLayerFromDocument": "从文档获取图层",
+    "GetLayerListFromDocument": "从文档获取图层列表",
+    "UnpackLayer": "解包图层",
+    "UpdateLayer": "更新图层",
+    "DeleteLayer": "删除图层",
+    "AddLayerToDocument": "添加图层到文档",
+    "GetLayerInfo": "获取图层信息",
+    "CreateLayer": "创建图层",
+    # 2D动画工具节点显示名称 - LayerUtils
+    "PreviewDocument": "预览文档",
+    "PreviewLayer": "预览图层",
 }

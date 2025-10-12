@@ -1,0 +1,108 @@
+注册分类AFA2D/图层编辑
+文档操作节点（Document-level）
+创建空白文档：输入宽度、高度 -> 输出一个空的文档对象
+删除图层：输入文档对象、图层id -> 输出更新后的文档对象（图层id已被释放）    
+添加图层到文档：输入文档对象、图层对象 -> 输出更新后的文档对象（由 Document 自动分配 id）
+
+获取信息节点（Info Nodes）
+获取文档信息：输入文档对象 -> 其本身自带文本框用于显示每项数据，同时带有输出画布宽度、高度、图层数量
+获取图层信息：输入图层对象 -> 其本身自带文本框用于显示每项数据，同时带有输出图层id（此时id处于未分配，值为-1）、名称、位置、透明度、是否可见、混合模式等信息
+
+图层筛选与提取节点（Layer Filtering & Extraction）
+创建图层：输入图层名、图像、位置、透明度、是否可见、混合模式 -> 输出一个图层对象（此时id处于未分配，值为-1）
+从文档获取图层：输入文档对象 和 图层名/图层id -> 输出单个图层对象（此时id已被分配，值为非-1）
+从文档获取图层列表：输入文档对象 -> 输出一个图层对象列表
+
+单图层操作节点（Single Layer Operations）
+解包图层：输入一个图层对象 -> 输出该图层的各个属性：图像, 图层名 (STRING), 位置(tuple[int, int, int, int]),透明度(FLOAT),图层是否隐藏(BOOL) 等。
+更新图层：输入一个图层对象和新的属性（如新的 IMAGE、新的 name）-> 输出一个更新后的图层对象。
+
+注册分类AFA2D/图层工具
+预览文档：输入文档对象 （可选图层id）-> 其本身就是图像输出节点，输出最终效果图 or 输出每个图层的效果图
+预览图层：输入图层对象 -> 其本身就是图像输出节点，输出最终效果图，输出选择的图像的效果图
+
+支持的混合模式：
+- 正常 (normal)
+- 正片叠底 (multiply)
+- 滤色 (screen)
+- 叠加 (overlay)
+- 柔光 (soft_light)
+- 强光 (hard_light)
+- 颜色减淡 (color_dodge)
+- 颜色加深 (color_burn)
+- 变暗 (darken)
+- 变亮 (lighten)
+- 差值 (difference)
+- 排除 (exclusion)
+
+数据结构说明：
+
+layer（图层对象）
+{
+    "layer_id": -1,                    // 未分配时为-1，分配后为非负整数
+    "name": "Character Lineart",       // 图层名称
+    "image_data": tensor_data,         // 直接存储tensor数据（主要存储方式）
+    "image_path": null,                // 图像文件路径（向后兼容，可选）
+    "position": [100, 150],            // [x, y] 坐标
+    "size": [512, 512],                // [width, height] 尺寸
+    "anchor": [0.0, 0.0],              // [x, y] 锚点，范围 0.0-1.0。 [0,0]是左上角, [0.5,0.5]是中心
+    "opacity": 1.0,                    // 透明度，范围 0.0-1.0
+    "visible": true,                   // 是否可见
+    "blend_mode": "normal",            // 混合模式
+    "metadata": {                      // 元数据
+        "created_by": "CreateLayerNode",
+        "data_type": "tensor"
+    }
+}
+
+document（文档对象）
+{
+    "document_id": "uuid-...",         // 文档唯一标识
+    "version": "1.0",                  // 版本号
+    "canvas_size": [1280, 720],        // 画布尺寸 [width, height]
+    "layers": [                        // 图层列表
+        {
+            "layer_id": 0,
+            "name": "Background",
+            "image_data": tensor_data,
+            "image_path": null,
+            "position": [0, 0],
+            "size": [1280, 720],
+            "anchor": [0.0, 0.0],
+            "opacity": 1.0,
+            "visible": true,
+            "blend_mode": "normal",
+            "metadata": {
+                "created_by": "CreateLayerNode",
+                "data_type": "tensor"
+            }
+        },
+        {
+            "layer_id": 1,
+            "name": "Character Lineart",
+            "image_data": tensor_data,
+            "image_path": null,
+            "position": [100, 150],
+            "size": [512, 512],
+            "anchor": [0.0, 0.0],
+            "opacity": 1.0,
+            "visible": true,
+            "blend_mode": "multiply",
+            "metadata": {
+                "created_by": "CreateLayerNode",
+                "data_type": "tensor"
+            }
+        }
+    ],
+    "metadata": {                      // 文档元数据
+        "created_by": "CreateBlankDocumentNode",
+        "description": "2D Animation Project"
+    }
+}
+
+实现说明：
+1. 数据存储优化：使用 image_data 直接存储tensor数据，避免文件I/O操作，提高性能
+2. 向后兼容：保留 image_path 字段以支持旧版本数据
+3. 混合模式：支持12种常用混合模式，包含中英文映射
+4. 遮罩功能：暂时延后开发，未来版本将添加 mask_data 和 mask_path 支持
+5. 封包图层节点：已从设计中移除，用户可使用创建图层节点实现相同功能
