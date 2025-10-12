@@ -2,6 +2,9 @@
 config/*.json
 !config/*.json.example
 
+# 排除文档文件夹
+core/文档
+
 # Python缓存文件
 __pycache__/
 *.py[cod]
