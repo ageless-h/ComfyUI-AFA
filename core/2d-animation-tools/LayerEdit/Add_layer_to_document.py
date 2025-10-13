@@ -12,7 +12,7 @@ class AddLayerToDocumentNode:
                 "图层": ("LAYER",),
             },
             "optional": {
-                "目标图层ID": ("INT", {"default": -1, "min": -1, "max": 999}),
+                "目标图层ID": ("INT", {"default": 0, "min": -1, "max": 999}),
             }
         }
     
@@ -26,7 +26,7 @@ class AddLayerToDocumentNode:
         # 参数映射
         document = kwargs.get("文档")
         layer = kwargs.get("图层")
-        target_layer_id = kwargs.get("目标图层ID", -1)
+        target_layer_id = kwargs.get("目标图层ID", 0)
         # 深拷贝文档和图层以避免修改原对象
         updated_document = copy.deepcopy(document)
         new_layer = copy.deepcopy(layer)
@@ -39,7 +39,7 @@ class AddLayerToDocumentNode:
             # 使用指定的ID（如果可用）
             assigned_id = target_layer_id
         else:
-            # 自动分配新ID
+            # 自动分配新ID，从0开始
             assigned_id = 0
             while assigned_id in existing_ids:
                 assigned_id += 1

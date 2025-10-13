@@ -127,6 +127,16 @@ preview_layer = import_module_from_path(
     os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerUtils", "Preview_layer.py")
 )
 
+# 2D动画工具节点 - LayerIO
+import_psd = import_module_from_path(
+    "import_psd",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerIO", "import_psd.py")
+)
+export_psd = import_module_from_path(
+    "export_psd",
+    os.path.join(NODE_DIR, "core", "2d-animation-tools", "LayerIO", "export_psd.py")
+)
+
 
 
 
@@ -165,6 +175,10 @@ CreateLayerNode = create_layer.CreateLayerNode
 PreviewDocumentNode = preview_document.PreviewDocumentNode
 PreviewLayerNode = preview_layer.PreviewLayerNode
 
+# 2D动画工具节点 - LayerIO
+ImportPSDNode = import_psd.ImportPSDNode
+ExportPSDAdvancedNode = export_psd.ExportPSDAdvancedNode
+
 # -------------------------------------------------------------------
 # 注册所有节点到 ComfyUI
 # -------------------------------------------------------------------
@@ -191,6 +205,9 @@ NODE_CLASS_MAPPINGS = {
     # 2D动画工具节点 - LayerUtils
     "PreviewDocument": PreviewDocumentNode,
     "PreviewLayer": PreviewLayerNode,
+    # 2D动画工具节点 - LayerIO
+    "ImportPSD": ImportPSDNode,
+    "ExportPSDAdvanced": ExportPSDAdvancedNode,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "APIKeySelector": "API Key Selector", "BaseURLSelector": "Base URL Selector",
@@ -215,4 +232,13 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # 2D动画工具节点显示名称 - LayerUtils
     "PreviewDocument": "预览文档",
     "PreviewLayer": "预览图层",
+    # 2D动画工具节点 - LayerIO
+    "ImportPSD": "导入PSD文档",
+    "ExportPSDAdvanced": "导出PSD文档",
 }
+
+# 导出JavaScript文件目录，使前端扩展能被加载
+WEB_DIRECTORY = "./js"
+
+# 导出所有必要的变量
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

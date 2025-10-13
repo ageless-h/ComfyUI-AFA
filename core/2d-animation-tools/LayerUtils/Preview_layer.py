@@ -27,6 +27,7 @@ class PreviewLayerNode:
     RETURN_NAMES = ("图层图像",)
     FUNCTION = "preview_layer"
     CATEGORY = "AFA2D/图层工具"
+    OUTPUT_NODE = True
     
     def preview_layer(self, **kwargs):
         """预览单个图层，输出图层的效果图"""

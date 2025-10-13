@@ -22,7 +22,7 @@ class PreviewDocumentNode:
                 "文档": ("DOCUMENT",),
             },
             "optional": {
-                "目标图层ID": ("INT", {"default": -1, "min": -1, "max": 999}),
+                "目标图层ID": ("INT", {"default": 0, "min": -1, "max": 999}),
                 "显示所有图层": ("BOOLEAN", {"default": True}),
             }
         }
@@ -31,11 +31,12 @@ class PreviewDocumentNode:
     RETURN_NAMES = ("预览图像",)
     FUNCTION = "preview_document"
     CATEGORY = "AFA2D/图层工具"
+    OUTPUT_NODE = True
     
     def preview_document(self, **kwargs):
         """预览文档，生成最终效果图或指定图层的效果图"""
         document = kwargs.get("文档")
-        target_layer_id = kwargs.get("目标图层ID", -1)
+        target_layer_id = kwargs.get("目标图层ID", 0)
         show_all_layers = kwargs.get("显示所有图层", True)
         
         canvas_width, canvas_height = document["canvas_size"]
@@ -56,7 +57,7 @@ class PreviewDocumentNode:
             # 预览指定图层
             target_layer = None
             for layer in layers:
-                if layer["layer_id"] == target_layer_id:
+                if layer.get("layer_id") == target_layer_id:
                     target_layer = layer
                     break
             

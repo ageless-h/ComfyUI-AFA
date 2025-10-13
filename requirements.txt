@@ -1,2 +1,12 @@
 openai
 requests
+
+# PSD文件处理库
+# 主要PSD写入库（推荐）
+PhotoshopAPI>=0.7.0
+
+# 备用PSD处理库
+psd-tools>=1.9.0
+
+# 第三备用方案（商业库，可选）
+# aspose-psd
