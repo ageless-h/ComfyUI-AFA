@@ -209,7 +209,7 @@ class SunoMusicExtender:
             }
             
             response = requests.post(
-                f"{base_url}/v1/chat/completions",
+                f"{base_url}/suno/generate",
                 headers=headers,
                 json=data,
                 timeout=timeout
