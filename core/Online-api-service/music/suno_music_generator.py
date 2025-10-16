@@ -74,12 +74,11 @@ class SunoMusicGenerator:
                 "歌曲标题": ("STRING", {"default": "", "placeholder": "歌曲标题（最多80字符）\n例如：夏日回忆"}),
                 
                 # 内容描述（按照用户要求的顺序：描述、歌词、风格）
-                "歌曲描述": ("STRING", {"multiline": True, "default": "", "placeholder": "描述歌曲的风格、情感、节奏等特征\n例如：一首轻快的夏日流行歌曲，带有清新的吉他旋律\n（非自定义模式下使用，最多500字符）"}),
+                "歌曲描述": ("STRING", {"multiline": True, "default": "", "placeholder": "描述歌曲的风格、情感、节奏等特征\n例如：一首轻快的夏日流行歌曲，带有清新的吉他旋律\n（最多500字符）"}),
                 "歌词内容": ("STRING", {"multiline": True, "default": "", "placeholder": "完整的歌词内容\n自定义模式下V4.5+支持5000字符，V4及以下支持3000字符\n可以包含verse、chorus、bridge等结构"}),
                 "风格标签": ("STRING", {"default": "", "placeholder": "音乐风格标签，多个标签用逗号分隔\n例如：pop, acoustic, summer, upbeat, guitar"}),
                 
                 # 模式设置
-                "自定义模式": ("BOOLEAN", {"default": True, "tooltip": "启用自定义模式，支持完整歌词和风格控制"}),
                 "纯音乐模式": ("BOOLEAN", {"default": False, "tooltip": "生成纯音乐（无人声）"}),
                 "声音性别": (["自动", "女声", "男声"], {"default": "自动", "tooltip": "选择人声性别"}),
                 "最大时长": ("INT", {"default": 0, "min": 0, "max": 600, "step": 5, "tooltip": "最大音频长度（秒），设置为0表示不限制长度"}),
@@ -107,7 +106,7 @@ class SunoMusicGenerator:
         style_tags = kwargs.get("风格标签", "")
         description_prompt = kwargs.get("歌曲描述", "")
         make_instrumental = kwargs.get("纯音乐模式", False)
-        custom_mode = kwargs.get("自定义模式", True)
+        custom_mode = True  # 固定启用自定义模式
         vocal_gender_map = {"自动": "auto", "女声": "female", "男声": "male"}
         vocal_gender = vocal_gender_map.get(kwargs.get("声音性别", "自动"), "auto")
         max_duration = kwargs.get("最大时长", 120)
