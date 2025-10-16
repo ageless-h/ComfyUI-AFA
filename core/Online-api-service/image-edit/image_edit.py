@@ -54,12 +54,17 @@ class ImageEditNode:
         if not all([api_key, base_url, 提示词]):
             return (None, "Error: Missing required inputs.", -1)
         
-        # 根据服务商选择API端点
-        if "t8star.cn" in base_url:
-            # t8使用generations端点（edits端点不工作）
-            endpoint_url = base_url.rstrip('/') + "/v1/images/generations"
+        # 根据服务商与是否为编辑场景选择API端点
+        is_t8 = "t8star.cn" in base_url
+        has_image_input = any(kwargs.get(k) is not None for k in ["图像", "图像2", "图像3"]) 
+        is_edit_model = ("Edit" in 模型) or ("Qwen-Image-Edit" in 模型)
+        use_edits_endpoint = (not is_t8) and (has_image_input or is_edit_model)
+
+        if use_edits_endpoint:
+            # 非t8平台在编辑/修复场景使用edits端点
+            endpoint_url = base_url.rstrip('/') + "/v1/images/edits"
         else:
-            # 硅基流动等使用新的图像生成端点
+            # t8平台或纯生成场景使用generations端点
             endpoint_url = base_url.rstrip('/') + "/v1/images/generations"
             
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
@@ -71,7 +76,7 @@ class ImageEditNode:
         }
         
         # 根据服务商调整参数
-        is_t8 = "t8star.cn" in base_url
+        # is_t8 已在上方定义
         
         # 添加可选参数
         if kwargs.get("负面提示词"):
@@ -113,26 +118,26 @@ class ImageEditNode:
         if kwargs.get("返回格式", "url") == "b64_json":
             data["response_format"] = "b64_json"
         
-        # 处理图像输入
+        # 处理图像输入（仅在编辑端点或t8平台下传递图像）
         try:
-            # 主图像
-            if kwargs.get("图像") is not None:
-                image_bytes = tensor_to_bytes(kwargs["图像"])
-                image_b64 = base64.b64encode(image_bytes).decode('utf-8')
-                data["image"] = f"data:image/png;base64,{image_b64}"
-            
-            # 第二张图像 - 仅对Qwen-Image-Edit-2509有效
-            if "Qwen-Image-Edit-2509" in 模型 and kwargs.get("图像2") is not None:
-                image2_bytes = tensor_to_bytes(kwargs["图像2"])
-                image2_b64 = base64.b64encode(image2_bytes).decode('utf-8')
-                data["image2"] = f"data:image/png;base64,{image2_b64}"
-            
-            # 第三张图像 - 仅对Qwen-Image-Edit-2509有效
-            if "Qwen-Image-Edit-2509" in 模型 and kwargs.get("图像3") is not None:
-                image3_bytes = tensor_to_bytes(kwargs["图像3"])
-                image3_b64 = base64.b64encode(image3_bytes).decode('utf-8')
-                data["image3"] = f"data:image/png;base64,{image3_b64}"
+            if is_t8 or use_edits_endpoint:
+                # 主图像
+                if kwargs.get("图像") is not None:
+                    image_bytes = tensor_to_bytes(kwargs["图像"])
+                    image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+                    data["image"] = f"data:image/png;base64,{image_b64}"
                 
+                # 第二张图像 - 仅对Qwen-Image-Edit-2509有效
+                if "Qwen-Image-Edit-2509" in 模型 and kwargs.get("图像2") is not None:
+                    image2_bytes = tensor_to_bytes(kwargs["图像2"])
+                    image2_b64 = base64.b64encode(image2_bytes).decode('utf-8')
+                    data["image2"] = f"data:image/png;base64,{image2_b64}"
+                
+                # 第三张图像 - 仅对Qwen-Image-Edit-2509有效
+                if "Qwen-Image-Edit-2509" in 模型 and kwargs.get("图像3") is not None:
+                    image3_bytes = tensor_to_bytes(kwargs["图像3"])
+                    image3_b64 = base64.b64encode(image3_bytes).decode('utf-8')
+                    data["image3"] = f"data:image/png;base64,{image3_b64}"
         except Exception as e:
             return (None, f"Error converting input image: {e}", -1)
         
@@ -144,7 +149,14 @@ class ImageEditNode:
             response = requests.post(endpoint_url, headers=headers, json=data, timeout=120)
             print(f"[Image Generation] Response status code: {response.status_code}")
             
-            response.raise_for_status()
+            # 非200时直接返回错误，避免None导致保存节点崩溃
+            if response.status_code != 200:
+                try:
+                    err_text = response.text
+                except Exception:
+                    err_text = "Unknown error"
+                return (None, f"API Error: status {response.status_code}, response: {err_text}", -1)
+
             response_data = response.json()
             print(f"[Image Generation] Response data keys: {list(response_data.keys())}")
             print(f"[Image Generation] Full response: {response_data}")
