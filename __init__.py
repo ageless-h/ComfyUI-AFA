@@ -215,7 +215,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "WorldbuildingUserInput": "用户输入: 世界观构建", "CharacterUserInput": "用户输入: 角色档案",
     "SaveTheCatUserInput": "用户输入: 救猫咪结构", "ScreenwriterUserInput": "用户输入: 剧本场景",
     "StoryboardUserInput": "用户输入: 分镜设计", "UltimateLLMPrompter": "LLM Prompter (All-in-One)",
-    "UltimateVLMPrompter": "VLM Prompter (All-in-One)", "ImageEditNode": "图像编辑 (Nano-banana)",
+    "UltimateVLMPrompter": "VLM Prompter (All-in-One)", "ImageEditNode": "图像生成/图像编辑",
     # 音乐API节点显示名称
     "SunoGenerator": "Suno音乐生成器",
     # 2D动画工具节点显示名称 - LayerEdit
