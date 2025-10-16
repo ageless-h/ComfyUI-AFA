@@ -2,6 +2,48 @@ import os
 import json
 import importlib.util
 import sys
+import asyncio
+import logging
+
+# -------------------------------------------------------------------
+# 忽略 Windows asyncio 连接重置错误
+# -------------------------------------------------------------------
+def ignore_asyncio_connection_errors():
+    """忽略 Windows 上 asyncio 的连接重置错误"""
+    try:
+        # 设置 asyncio 日志级别，忽略连接重置错误
+        asyncio_logger = logging.getLogger('asyncio')
+        asyncio_logger.setLevel(logging.ERROR)
+        
+        # 添加自定义异常处理器
+        def custom_exception_handler(loop, context):
+            exception = context.get('exception')
+            if exception:
+                # 忽略连接重置错误
+                if isinstance(exception, (ConnectionResetError, ConnectionAbortedError)):
+                    return
+                # 忽略特定的 Windows 错误
+                if hasattr(exception, 'winerror') and exception.winerror == 10054:
+                    return
+            
+            # 对于其他异常，使用默认处理
+            loop.default_exception_handler(context)
+        
+        # 获取当前事件循环并设置异常处理器
+        try:
+            loop = asyncio.get_event_loop()
+            loop.set_exception_handler(custom_exception_handler)
+        except RuntimeError:
+            # 如果没有运行的事件循环，设置默认策略
+            asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+            
+        print("[AFA] 已设置 asyncio 异常处理器，忽略连接重置错误")
+        
+    except Exception as e:
+        print(f"[AFA] 设置 asyncio 异常处理器时出错: {e}")
+
+# 初始化异常处理
+ignore_asyncio_connection_errors()
 
 # -------------------------------------------------------------------
 # 配置加载器
@@ -72,6 +114,18 @@ image_edit = import_module_from_path(
 suno_generator = import_module_from_path(
     "suno_generator",
     os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_generator.py")
+)
+suno_music_generator = import_module_from_path(
+    "suno_music_generator",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_music_generator.py")
+)
+suno_music_extender = import_module_from_path(
+    "suno_music_extender",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_music_extender.py")
+)
+suno_music_cover = import_module_from_path(
+    "suno_music_cover",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_music_cover.py")
 )
 
 # 导入2D动画工具模块 - LayerEdit
@@ -158,6 +212,9 @@ ImageEditNode = image_edit.ImageEditNode
 
 # 音乐API节点
 SunoGeneratorNode = suno_generator.SunoGeneratorNode
+SunoMusicGeneratorNode = suno_music_generator.SunoMusicGenerator
+SunoMusicExtenderNode = suno_music_extender.SunoMusicExtender
+SunoMusicCoverNode = suno_music_cover.SunoMusicCover
 
 # 2D动画工具节点 - LayerEdit
 CreateBlankDocumentNode = create_blank_document.CreateBlankDocumentNode
@@ -191,6 +248,9 @@ NODE_CLASS_MAPPINGS = {
     "UltimateVLMPrompter": UltimateVLMPrompterNode, "ImageEditNode": ImageEditNode,
     # 音乐API节点
     "SunoGenerator": SunoGeneratorNode,
+    "SunoMusicGenerator": SunoMusicGeneratorNode,
+    "SunoMusicExtender": SunoMusicExtenderNode,
+    "SunoMusicCover": SunoMusicCoverNode,
     # 2D动画工具节点 - LayerEdit
     "CreateBlankDocument": CreateBlankDocumentNode,
     "ObtainDocumentInformation": ObtainDocumentInformationNode,
@@ -218,6 +278,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "UltimateVLMPrompter": "VLM Prompter (All-in-One)", "ImageEditNode": "图像生成/图像编辑",
     # 音乐API节点显示名称
     "SunoGenerator": "Suno音乐生成器",
+    "SunoMusicGenerator": "Suno音乐生成器",
+    "SunoMusicExtender": "Suno音乐续写器",
+    "SunoMusicCover": "Suno音乐翻唱器",
     # 2D动画工具节点显示名称 - LayerEdit
     "CreateBlankDocument": "创建空白文档",
     "ObtainDocumentInformation": "获取文档信息",

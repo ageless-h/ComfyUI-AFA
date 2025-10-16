@@ -32,8 +32,28 @@ def create_audio_object(url, max_duration_seconds=20):
     try:
         # 下载音频文件
         print(f"[Suno生成器] 开始下载音频: {url}")
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
+        
+        # 使用会话管理和适当的超时设置
+        session = requests.Session()
+        session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Connection': 'close'  # 明确关闭连接以避免连接重置错误
+        })
+        
+        try:
+            response = session.get(url, stream=True, timeout=(10, 30))  # 连接超时10秒，读取超时30秒
+            response.raise_for_status()
+        except (requests.exceptions.ConnectionError, ConnectionResetError) as e:
+            print(f"[Suno生成器] 网络连接错误，尝试重试: {e}")
+            # 重试一次
+            try:
+                response = session.get(url, stream=True, timeout=(10, 30))
+                response.raise_for_status()
+            except Exception as retry_e:
+                print(f"[Suno生成器] 重试失败: {retry_e}")
+                raise retry_e
+        finally:
+            session.close()  # 确保会话被正确关闭
         
         # 保存为临时文件
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
@@ -85,11 +105,14 @@ def create_audio_object(url, max_duration_seconds=20):
                 waveform = waveform.contiguous()
                 print(f"[Suno生成器] 强制连续化")
             
-            # 根据max_duration参数计算最大采样点数
-            max_length = int(sample_rate * max_duration_seconds)  # 将秒转换为采样点数
-            if waveform.shape[2] > max_length:  # 现在是3D，样本在第2维
-                waveform = waveform[:, :, :max_length]
-                print(f"[Suno生成器] 音频太长，已裁剪到 {max_length} 采样点 ({max_duration_seconds}秒)")
+            # 根据max_duration参数计算最大采样点数（0表示不限制长度）
+            if max_duration_seconds > 0:
+                max_length = int(sample_rate * max_duration_seconds)  # 将秒转换为采样点数
+                if waveform.shape[2] > max_length:  # 现在是3D，样本在第2维
+                    waveform = waveform[:, :, :max_length]
+                    print(f"[Suno生成器] 音频太长，已裁剪到 {max_length} 采样点 ({max_duration_seconds}秒)")
+            else:
+                print(f"[Suno生成器] 保持完整音频长度: {waveform.shape[2]} 采样点 ({waveform.shape[2]/sample_rate:.2f}秒)")
             
             # 最终验证：确保是3D张量
             assert len(waveform.shape) == 3, f"波形必须是3D张量，当前形状: {waveform.shape}"
@@ -142,32 +165,145 @@ class SunoGeneratorNode:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "api_key": ("API_KEY",),
-                "base_url": ("BASE_URL",),
-                "model_name": ("MODEL_NAME",),
-                "title": ("STRING", {"default": ""}),
-                "description_prompt": ("STRING", {"multiline": True, "placeholder": "输入详细的歌曲描述"}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                "make_instrumental": ("BOOLEAN", {"default": False}),
-                "max_duration": ("INT", {"default": 20, "min": 10, "max": 180, "step": 5}),
+                "API密钥": ("API_KEY",),
+                "基础URL": ("BASE_URL",),
+                "模型名称": ("MODEL_NAME",),
+                "任务类型": (["普通生成", "续写扩展", "翻唱生成"], 
+                            {"default": "普通生成", "tooltip": "选择生成模式：普通生成新歌曲/续写扩展现有歌曲/翻唱生成"}),
+                "纯音乐模式": ("BOOLEAN", {"default": False, "tooltip": "生成纯音乐（无人声）"}),
+                "最大时长": ("INT", {"default": 0, "min": 0, "max": 600, "step": 5, "tooltip": "最大音频长度（秒），设置为0表示不限制长度"}),
+                "自定义模式": ("BOOLEAN", {"default": True, "tooltip": "启用自定义模式，支持完整歌词和风格控制"}),
             },
             "optional": {
-                "lyrics": ("STRING", {"multiline": True, "default": "", "placeholder": "可选：直接输入歌词"}),
-                "tags": ("STRING", {"default": "", "placeholder": "可选：音乐标签，如流行、摇滚、欢快、忧伤等，多个标签用逗号分隔"}),
-                "timeout": ("INT", {"default": 300, "min": 30, "max": 600}),
-                "max_attempts": ("INT", {"default": 30, "min": 1, "max": 50}),
-                "retry_delay": ("FLOAT", {"default": 5.0, "min": 1.0, "max": 60.0, "step": 0.5}),
+                "歌曲标题": ("STRING", {"default": "", "placeholder": "歌曲标题（最多80字符）"}),
+                "歌词内容": ("STRING", {"multiline": True, "default": "", "placeholder": "歌词内容（自定义模式下V4.5+支持5000字符，V4及以下支持3000字符）"}),
+                "风格标签": ("STRING", {"default": "", "placeholder": "音乐风格标签，如：pop, rock, jazz等（V4.5+支持1000字符，V4及以下支持200字符）"}),
+                "歌曲描述": ("STRING", {"multiline": True, "default": "", "placeholder": "非自定义模式下的歌曲描述（最多500字符）"}),
+                "生成类型": ("STRING", {"default": "TEXT", "placeholder": "生成类型，默认为TEXT"}),
+                "声音性别": (["自动", "女声", "男声"], {"default": "自动", "tooltip": "选择人声性别"}),
+                "参考音频": ("AUDIO", {"tooltip": "用于续写扩展的参考音频（续写模式时使用）"}),
+                "参考音频URL": ("STRING", {"default": "", "placeholder": "参考音频URL（备用输入方式）"}),
+                "排除风格": ("STRING", {"default": "", "placeholder": "要避免的音乐风格"}),
+                "风格权重": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.1, "tooltip": "风格影响强度"}),
+                "创意程度": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.1, "tooltip": "音乐创意和随机性程度"}),
+                # 续写功能参数
+                "前任务ID": ("STRING", {"default": "", "placeholder": "续写的前任务ID（续写模式时填写）"}),
+                "续写起点": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 300.0, "step": 0.1, "tooltip": "从第几秒开始继续创作"}),
+                "续写歌曲ID": ("STRING", {"default": "", "placeholder": "需要继续创作的歌曲ID"}),
+                "续写提示词": ("STRING", {"default": "", "placeholder": "继续创作的对齐提示词"}),
+                # 翻唱生成功能参数
+                "翻唱音频ID": ("STRING", {"default": "", "placeholder": "要翻唱的原曲ID或上传的音频clip ID"}),
+                "填充开始时间": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 300.0, "step": 0.1, "tooltip": "音频填充开始时间（秒）"}),
+                "填充结束时间": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 300.0, "step": 0.1, "tooltip": "音频填充结束时间（秒）"}),
+                # 通用参数
+                "随机种子": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "随机种子，相同种子产生相似结果"}),
+                "超时时间": ("INT", {"default": 300, "min": 30, "max": 600, "tooltip": "请求超时时间（秒）"}),
+                "最大尝试次数": ("INT", {"default": 120, "min": 1, "max": 200, "tooltip": "最大轮询尝试次数"}),
+                "重试间隔": ("FLOAT", {"default": 5.0, "min": 1.0, "max": 60.0, "step": 0.5, "tooltip": "重试间隔时间（秒）"}),
             }
         }
     
     RETURN_TYPES = ("AUDIO", "AUDIO", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("audio1", "audio2", "audio_url1", "audio_url2", "prompt", "task_id", "response", "clip_id", "title")
+    RETURN_NAMES = ("音频1", "音频2", "音频链接1", "音频链接2", "提示词", "任务ID", "响应信息", "片段ID", "歌曲标题")
     FUNCTION = "generate_music"
     CATEGORY = "AFA/音乐"
 
-    def generate_music(self, api_key, base_url, model_name, title, description_prompt, seed=0, 
-                       make_instrumental=False, max_duration=20, lyrics="", tags="", 
-                       timeout=300, max_attempts=30, retry_delay=5.0):
+    def generate_music(self, **kwargs):
+        # 参数映射：中文参数名 -> 英文内部变量名
+        param_mapping = {
+            "API密钥": "api_key",
+            "基础URL": "base_url", 
+            "模型名称": "model_name",
+            "任务类型": "task_type",
+            "纯音乐模式": "make_instrumental",
+            "最大时长": "max_duration",
+            "自定义模式": "custom_mode",
+            "歌曲标题": "title",
+            "歌词内容": "lyrics",
+            "风格标签": "style_tags",
+            "歌曲描述": "description_prompt",
+            "生成类型": "generation_type",
+            "声音性别": "vocal_gender",
+            "参考音频": "reference_audio",
+            "参考音频URL": "reference_audio_url",
+            "排除风格": "negative_tags",
+            "风格权重": "style_weight",
+            "创意程度": "weirdness_constraint",
+            "前任务ID": "task_id",
+            "续写起点": "continue_at",
+            "续写歌曲ID": "continue_clip_id",
+            "续写提示词": "continued_aligned_prompt",
+            "翻唱音频ID": "cover_clip_id",
+            "填充开始时间": "infill_start_s",
+            "填充结束时间": "infill_end_s",
+            "随机种子": "seed",
+            "超时时间": "timeout",
+            "最大尝试次数": "max_attempts",
+            "重试间隔": "retry_delay"
+        }
+        
+        # 任务类型映射
+        task_type_mapping = {
+            "普通生成": "generate",
+            "续写扩展": "extend", 
+            "翻唱生成": "cover"
+        }
+        
+        # 声音性别映射
+        vocal_gender_mapping = {
+            "自动": "auto",
+            "女声": "female",
+            "男声": "male"
+        }
+        
+        # 提取并转换参数
+        params = {}
+        for chinese_name, english_name in param_mapping.items():
+            if chinese_name in kwargs:
+                params[english_name] = kwargs[chinese_name]
+        
+        # 设置默认值
+        api_key = params.get("api_key", "")
+        base_url = params.get("base_url", "")
+        model_name = params.get("model_name", "")
+        task_type = task_type_mapping.get(params.get("task_type", "普通生成"), "generate")
+        make_instrumental = params.get("make_instrumental", False)
+        max_duration = params.get("max_duration", 0)
+        custom_mode = params.get("custom_mode", True)
+        title = params.get("title", "")
+        lyrics = params.get("lyrics", "")
+        style_tags = params.get("style_tags", "")
+        description_prompt = params.get("description_prompt", "")
+        generation_type = params.get("generation_type", "TEXT")
+        vocal_gender = vocal_gender_mapping.get(params.get("vocal_gender", "自动"), "auto")
+        reference_audio = params.get("reference_audio", None)
+        reference_audio_url = params.get("reference_audio_url", "")
+        negative_tags = params.get("negative_tags", "")
+        style_weight = params.get("style_weight", 0.5)
+        weirdness_constraint = params.get("weirdness_constraint", 0.5)
+        task_id = params.get("task_id", "")
+        continue_at = params.get("continue_at", 0.0)
+        continue_clip_id = params.get("continue_clip_id", "")
+        continued_aligned_prompt = params.get("continued_aligned_prompt", "")
+        cover_clip_id = params.get("cover_clip_id", "")
+        infill_start_s = params.get("infill_start_s", 0.0)
+        infill_end_s = params.get("infill_end_s", 0.0)
+        seed = params.get("seed", 0)
+        timeout = params.get("timeout", 300)
+        max_attempts = params.get("max_attempts", 120)
+        retry_delay = params.get("retry_delay", 5.0)
+        
+        # 处理音频输入
+        if reference_audio is not None and task_type == "extend":
+            try:
+                # 如果有音频输入，将其保存为临时文件并获取URL
+                # 这里需要实现音频上传到 Suno 的逻辑
+                print(">>> [Suno生成器] 检测到音频输入，正在处理...")
+                # TODO: 实现音频上传功能
+                # reference_audio_url = self.upload_audio_to_suno(reference_audio, api_key, base_url)
+            except Exception as e:
+                print(f"!!! [Suno生成器] 音频处理失败: {str(e)}")
+                reference_audio_url = ""
         """生成音乐"""
         if not api_key:
             error_message = "API密钥不能为空"
@@ -175,49 +311,181 @@ class SunoGeneratorNode:
             empty_audio = create_audio_object("", max_duration_seconds=max_duration)
             return (empty_audio, empty_audio, "", "", "", "", json.dumps({"error": error_message}, ensure_ascii=False), "", "")
         
-        # 使用配置系统中的model_name，这已经是正确的mv值
+        # 验证任务类型特定的必需参数
+        if task_type == "extend" and not task_id:
+            error_message = "续写扩展模式下前任务ID不能为空"
+            print(f"!!! [Suno生成器] {error_message}")
+            empty_audio = create_audio_object("", max_duration_seconds=max_duration)
+            return (empty_audio, empty_audio, "", "", "", "", json.dumps({"error": error_message}, ensure_ascii=False), "", "")
+        
+        if task_type == "cover" and not cover_clip_id:
+            error_message = "翻唱生成模式下翻唱音频ID不能为空"
+            print(f"!!! [Suno生成器] {error_message}")
+            empty_audio = create_audio_object("", max_duration_seconds=max_duration)
+            return (empty_audio, empty_audio, "", "", "", "", json.dumps({"error": error_message}, ensure_ascii=False), "", "")
+        
+        # 直接使用选择器传入的模型名称
         mv = model_name
         
         try:
-            # 构建完整的提示词
-            full_prompt = description_prompt
+            # 检查是否使用参考音频扩展功能
+            use_reference_audio = bool(reference_audio_url.strip())
             
-            # 如果有歌词，添加到提示中
-            if lyrics:
-                full_prompt = f"{full_prompt}\n\n歌词:\n{lyrics}"
+            # 根据模型版本确定字符限制
+            is_v45_plus = any(v in mv.lower() for v in ['v4.5', 'v4_5', 'v5', 'chirp-v4-5', 'chirp-v5'])
+            max_lyrics_chars = 5000 if is_v45_plus else 3000
+            max_style_chars = 1000 if is_v45_plus else 200
+            
+            # 字符长度验证和截断
+            if title and len(title) > 80:
+                print(f"[Suno生成器] 警告：标题超过80字符，将被截断")
+                title = title[:80]
+            
+            if lyrics and len(lyrics) > max_lyrics_chars:
+                print(f"[Suno生成器] 警告：歌词超过{max_lyrics_chars}字符，将被截断")
+                lyrics = lyrics[:max_lyrics_chars]
+            
+            if style_tags and len(style_tags) > max_style_chars:
+                print(f"[Suno生成器] 警告：风格标签超过{max_style_chars}字符，将被截断")
+                style_tags = style_tags[:max_style_chars]
+            
+            if description_prompt and len(description_prompt) > 500:
+                print(f"[Suno生成器] 警告：描述提示超过500字符，将被截断")
+                description_prompt = description_prompt[:500]
+            
+            # 根据任务类型构建API请求payload
+            if task_type == "generate":
+                # 普通生成
+                endpoint = "/suno/generate"
+                payload = {
+                    "generation_type": generation_type,
+                    "mv": mv,
+                }
                 
-            # 如果有标签，添加到提示中
-            if tags:
-                full_prompt = f"{full_prompt}\n\n标签: {tags}"
+                if custom_mode:
+                    # 自定义模式
+                    if title:
+                        payload["title"] = title
+                    if style_tags:
+                        payload["tags"] = style_tags
+                    if not make_instrumental and lyrics:
+                        payload["prompt"] = lyrics
+                    if negative_tags:
+                        payload["negative_tags"] = negative_tags
+                else:
+                    # 非自定义模式
+                    if description_prompt:
+                        payload["gpt_description_prompt"] = description_prompt
+                
+                payload["make_instrumental"] = make_instrumental
+                
+            elif task_type == "extend":
+                # 续写功能
+                endpoint = "/suno/generate"
+                payload = {
+                    "task_id": task_id,
+                    "title": title,
+                    "tags": style_tags,
+                    "generation_type": generation_type,
+                    "prompt": lyrics,
+                    "negative_tags": negative_tags,
+                    "mv": mv,
+                    "continue_at": continue_at,
+                    "continue_clip_id": continue_clip_id,
+                    "task": "extend"
+                }
+                
+                if continued_aligned_prompt:
+                    payload["continued_aligned_prompt"] = continued_aligned_prompt
+                    
+            elif task_type == "cover":
+                # 上传生成功能
+                endpoint = "/suno/generate"
+                payload = {
+                    "prompt": lyrics,
+                    "generation_type": generation_type,
+                    "tags": style_tags,
+                    "negative_tags": negative_tags,
+                    "mv": mv,  # 直接使用选择器传入的模型名称
+                    "title": title,
+                    "continue_clip_id": continue_clip_id if continue_clip_id else None,
+                    "continue_at": continue_at if continue_at > 0 else None,
+                    "continued_aligned_prompt": continued_aligned_prompt if continued_aligned_prompt else None,
+                    "infill_start_s": infill_start_s if infill_start_s > 0 else None,
+                    "infill_end_s": infill_end_s if infill_end_s > 0 else None,
+                    "task": "cover",
+                    "cover_clip_id": cover_clip_id,
+                    "task_id": task_id
+                }
+                
+            # 处理参考音频扩展（可以与其他模式结合）
+            if reference_audio_url.strip():
+                endpoint = "/suno/upload-extend"
+                payload = {
+                    "uploadUrl": reference_audio_url,
+                    "defaultParamFlag": False,
+                    "instrumental": make_instrumental,
+                    "model": mv,
+                    "prompt": lyrics,
+                    "style": style_tags
+                }
             
-            # 根据API文档使用正确的参数格式
-            payload = {
-                "gpt_description_prompt": full_prompt,  # 使用gpt_description_prompt
-                "make_instrumental": make_instrumental,
-                "mv": mv,
-            }
-            
-            # 添加可选参数
-            if title:
-                payload["title"] = title
-            if tags:
-                payload["tags"] = tags
+            # 添加通用可选参数（仅在支持的任务类型中）
+            if not reference_audio_url.strip():  # 非参考音频模式才添加这些参数
+                if vocal_gender != "auto" and task_type in ["generate", "extend", "cover"]:
+                    gender_map = {"female": "f", "male": "m"}
+                    if vocal_gender in gender_map:
+                        payload["vocal_gender"] = gender_map[vocal_gender]
+                
+                if style_weight != 0.5 and task_type == "generate":
+                    payload["style_weight"] = style_weight
+                    
+                if weirdness_constraint != 0.5 and task_type == "generate":
+                    payload["weirdness_constraint"] = weirdness_constraint
 
-            if seed > 0:
-                payload["seed"] = seed
+                if seed > 0:
+                    payload["seed"] = seed
             
             pbar = comfy.utils.ProgressBar(100)
             pbar.update_absolute(10)
             
-            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            headers = {
+                "Authorization": f"Bearer {api_key}", 
+                "Content-Type": "application/json",
+                "Connection": "close"  # 明确关闭连接以避免连接重置错误
+            }
             
-            # 发送生成请求 - 根据API文档使用正确端点
-            response = requests.post(
-                f"{base_url}/suno/generate",
-                headers=headers,
-                json=payload,
-                timeout=timeout
-            )
+            # 发送生成请求 - 根据功能使用对应端点
+            api_url = f"{base_url}{endpoint}"
+            print(f"[Suno生成器] 请求URL: {api_url}")
+            print(f"[Suno生成器] 请求参数: {json.dumps(payload, ensure_ascii=False, indent=2)}")
+            
+            # 使用会话管理和错误重试
+            session = requests.Session()
+            session.headers.update(headers)
+            
+            try:
+                response = session.post(
+                    api_url,
+                    json=payload,
+                    timeout=timeout
+                )
+            except (requests.exceptions.ConnectionError, ConnectionResetError) as e:
+                print(f"[Suno生成器] API请求连接错误，尝试重试: {e}")
+                # 重试一次
+                try:
+                    response = session.post(
+                        api_url,
+                        json=payload,
+                        timeout=timeout
+                    )
+                except Exception as retry_e:
+                    print(f"[Suno生成器] API请求重试失败: {retry_e}")
+                    session.close()
+                    empty_audio = create_audio_object("")
+                    return (empty_audio, empty_audio, "", "", "", "", json.dumps({"error": f"连接错误: {retry_e}"}, ensure_ascii=False), "", "")
+            finally:
+                session.close()  # 确保会话被正确关闭
             
             pbar.update_absolute(20)
             
@@ -279,11 +547,23 @@ class SunoGeneratorNode:
                 
                 try:
                     # 根据API文档，使用feed API查询clips状态
-                    clip_response = requests.get(
-                        f"{base_url}/suno/feed/{','.join(clip_ids)}",
-                        headers=headers,
-                        timeout=timeout
-                    )
+                    # 使用会话管理和错误重试
+                    query_session = requests.Session()
+                    query_headers = headers.copy()
+                    query_headers["Connection"] = "close"  # 明确关闭连接
+                    query_session.headers.update(query_headers)
+                    
+                    try:
+                        clip_response = query_session.get(
+                            f"{base_url}/suno/feed/{','.join(clip_ids)}",
+                            timeout=timeout
+                        )
+                    except (requests.exceptions.ConnectionError, ConnectionResetError) as e:
+                        print(f"[Suno生成器] 状态查询连接错误 (尝试 {attempts}): {e}")
+                        query_session.close()
+                        continue  # 跳过这次查询，等待下次重试
+                    finally:
+                        query_session.close()  # 确保会话被正确关闭
                     
                     if clip_response.status_code != 200:
                         continue
@@ -326,10 +606,13 @@ class SunoGeneratorNode:
                         print(f"[Suno生成器] Clip {clip.get('id', 'unknown')}: status={clip_status}, has_url={bool(audio_url)}")
                         
                         # 检查clip是否完成
-                        if clip_status in ["complete", "completed", "streaming"]:
+                        if clip_status in ["complete", "completed"]:
                             if audio_url:
                                 complete_clips.append(clip)
                                 print(f"[Suno生成器] ✓ Clip完成: {clip.get('id')}, URL: {audio_url}")
+                        elif clip_status == "streaming":
+                            if audio_url:
+                                print(f"[Suno生成器] ⏳ Clip流式生成中: {clip.get('id')}, URL可用但仍在生成...")
                         elif clip_status in ["error", "failed"]:
                             print(f"!!! [Suno生成器] Clip失败: {clip.get('id')}")
                     
@@ -459,13 +742,24 @@ class SunoGeneratorNode:
             
             response_info = {
                 "status": "success",
+                "task_type": task_type,
                 "prompt": generated_prompt,
                 "title": final_title, 
                 "model": mv,
+                "generation_type": generation_type,
                 "seed": seed if seed > 0 else "auto",
                 "make_instrumental": make_instrumental,
+                "custom_mode": custom_mode,
+                "vocal_gender": vocal_gender,
+                "style_weight": style_weight,
+                "weirdness_constraint": weirdness_constraint,
                 "clips_generated": len(final_clips),
-                "tags": extracted_tags
+                "tags": extracted_tags,
+                "use_reference_audio": bool(reference_audio_url.strip()),
+                "task_id_input": task_id,
+                "continue_at": continue_at,
+                "continue_clip_id": continue_clip_id,
+                "cover_clip_id": cover_clip_id
             }
 
             return (
