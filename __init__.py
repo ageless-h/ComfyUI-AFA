@@ -111,10 +111,6 @@ image_edit = import_module_from_path(
 )
 
 # 导入音乐模块
-suno_generator = import_module_from_path(
-    "suno_generator",
-    os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_generator.py")
-)
 suno_music_generator = import_module_from_path(
     "suno_music_generator",
     os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_music_generator.py")
@@ -126,6 +122,28 @@ suno_music_extender = import_module_from_path(
 suno_music_cover = import_module_from_path(
     "suno_music_cover",
     os.path.join(NODE_DIR, "core", "Online-api-service", "music", "suno_music_cover.py")
+)
+
+# 导入飞书模块
+feishu_config = import_module_from_path(
+    "feishu_config",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "feishu", "feishu_config.py")
+)
+feishu_read = import_module_from_path(
+    "feishu_read",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "feishu", "feishu_read.py")
+)
+feishu_write = import_module_from_path(
+    "feishu_write",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "feishu", "feishu_write.py")
+)
+feishu_read_diff = import_module_from_path(
+    "feishu_read_diff",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "feishu", "feishu_read_diff.py")
+)
+feishu_upload_image = import_module_from_path(
+    "feishu_upload_image",
+    os.path.join(NODE_DIR, "core", "Online-api-service", "feishu", "feishu_upload_image.py")
 )
 
 # 导入2D动画工具模块 - LayerEdit
@@ -210,11 +228,17 @@ UltimateLLMPrompterNode = llm_prompter.UltimateLLMPrompterNode
 UltimateVLMPrompterNode = vlm_prompter.UltimateVLMPrompterNode
 ImageEditNode = image_edit.ImageEditNode
 
-# 音乐API节点
-SunoGeneratorNode = suno_generator.SunoGeneratorNode
+# 音乐模块节点
 SunoMusicGeneratorNode = suno_music_generator.SunoMusicGenerator
 SunoMusicExtenderNode = suno_music_extender.SunoMusicExtender
 SunoMusicCoverNode = suno_music_cover.SunoMusicCover
+
+# 飞书API节点
+FeishuConfigNode = feishu_config.FeishuConfigNode
+FeishuReadNode = feishu_read.FeishuReadNode
+FeishuWriteNode = feishu_write.FeishuWriteNode
+FeishuReadDiffNode = feishu_read_diff.FeishuReadDiffNode
+FeishuUploadImageNode = feishu_upload_image.FeishuUploadImageNode
 
 # 2D动画工具节点 - LayerEdit
 CreateBlankDocumentNode = create_blank_document.CreateBlankDocumentNode
@@ -246,11 +270,16 @@ NODE_CLASS_MAPPINGS = {
     "SaveTheCatUserInput": SaveTheCatUserInputNode, "ScreenwriterUserInput": ScreenwriterUserInputNode,
     "StoryboardUserInput": StoryboardUserInputNode, "UltimateLLMPrompter": UltimateLLMPrompterNode,
     "UltimateVLMPrompter": UltimateVLMPrompterNode, "ImageEditNode": ImageEditNode,
-    # 音乐API节点
-    "SunoGenerator": SunoGeneratorNode,
+    # 音乐模块
     "SunoMusicGenerator": SunoMusicGeneratorNode,
     "SunoMusicExtender": SunoMusicExtenderNode,
     "SunoMusicCover": SunoMusicCoverNode,
+    # 飞书API节点
+    "FeishuConfig": FeishuConfigNode,
+    "FeishuRead": FeishuReadNode,
+    "FeishuWrite": FeishuWriteNode,
+    "FeishuReadDiff": FeishuReadDiffNode,
+    "FeishuUploadImage": FeishuUploadImageNode,
     # 2D动画工具节点 - LayerEdit
     "CreateBlankDocument": CreateBlankDocumentNode,
     "ObtainDocumentInformation": ObtainDocumentInformationNode,
@@ -276,11 +305,16 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "SaveTheCatUserInput": "用户输入: 救猫咪结构", "ScreenwriterUserInput": "用户输入: 剧本场景",
     "StoryboardUserInput": "用户输入: 分镜设计", "UltimateLLMPrompter": "LLM Prompter (All-in-One)",
     "UltimateVLMPrompter": "VLM Prompter (All-in-One)", "ImageEditNode": "图像生成/图像编辑",
-    # 音乐API节点显示名称
-    "SunoGenerator": "Suno音乐生成器",
+    # 音乐模块
     "SunoMusicGenerator": "Suno音乐生成器",
     "SunoMusicExtender": "Suno音乐续写器",
     "SunoMusicCover": "Suno音乐翻唱器",
+    # 飞书API节点显示名称
+    "FeishuConfig": "飞书数据配置",
+    "FeishuRead": "飞书读取数据",
+    "FeishuWrite": "飞书写入数据",
+    "FeishuReadDiff": "飞书读取数据差",
+    "FeishuUploadImage": "飞书上传图像",
     # 2D动画工具节点显示名称 - LayerEdit
     "CreateBlankDocument": "创建空白文档",
     "ObtainDocumentInformation": "获取文档信息",

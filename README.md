@@ -88,6 +88,19 @@ cp user_prompts.json.example user_prompts.json
 }
 ```
 
+#### feishu_config.json（飞书表格集成配置）
+```json
+{
+  "app_id": "你的飞书应用ID",
+  "app_secret": "你的飞书应用密钥"
+}
+```
+
+> **飞书配置说明**：
+> 1. 需要在飞书开放平台创建应用并获取app_id和app_secret
+> 2. 确保应用具有表格读写权限
+> 3. 配置文件同样受到`.gitignore`保护，不会泄露敏感信息
+
 ### 配置文件安全说明
 
 - **个人配置文件**（`*.json`）已被添加到`.gitignore`中，不会被上传到Git仓库，保护您的API密钥等敏感信息
@@ -113,7 +126,14 @@ cp user_prompts.json.example user_prompts.json
 - **LLM Prompter (All-in-One)**：大语言模型文本生成
 - **VLM Prompter (All-in-One)**：视觉语言模型图像分析
 - **图像编辑 (Nano-banana)**：基于文本提示的图像编辑
-- **Suno音乐生成器**：基于文本描述生成音乐
+- **Suno音乐生成器**：基于文本描述生成音乐（支持生成、续写、翻唱功能）
+
+### 飞书表格集成节点
+- **飞书配置**：配置飞书应用凭据和表格URL，自动提取表格ID和工作表ID
+- **飞书读取数据**：从飞书表格中读取指定单元格的数据，支持强制刷新
+- **飞书写入数据**：向飞书表格的指定单元格写入数据
+- **飞书读取数据差**：计算飞书表格中指定行或列的数据差值，用于数据分析
+- **飞书上传图像**：将图像上传到飞书表格，支持单元格内图像和浮动图片两种模式
 
 ### 2D动画工具节点
 
@@ -168,8 +188,8 @@ cp user_prompts.json.example user_prompts.json
 1. 使用**API Key Selector**选择"t8"
 2. 使用**Base URL Selector**选择"t8"
 3. 使用**Model Name Selector**选择"t8-suno-music"
-4. 使用**Suno音乐生成器**节点，输入歌曲标题、描述和标签
-5. 设置最大音频时长（10-180秒）
+4. 使用**Suno音乐生成器**节点（支持普通生成、续写扩展、翻唱生成），输入歌曲标题、歌词和风格标签
+5. 设置最大音频时长和其他参数
 6. 连接到**PreviewAudio**节点播放生成的音乐
 
 ### PSD文件处理工作流
