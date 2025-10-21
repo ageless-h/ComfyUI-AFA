@@ -9,7 +9,17 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.append(current_dir)
 
-from blend_modes import BlendModes
+# 使用相对导入避免与系统包冲突
+try:
+    from .blend_modes import BlendModes
+except ImportError:
+    # 如果相对导入失败，尝试直接导入本地模块
+    import importlib.util
+    blend_modes_path = os.path.join(current_dir, "blend_modes.py")
+    spec = importlib.util.spec_from_file_location("blend_modes", blend_modes_path)
+    blend_modes_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(blend_modes_module)
+    BlendModes = blend_modes_module.BlendModes
 
 
 class PreviewDocumentNode:

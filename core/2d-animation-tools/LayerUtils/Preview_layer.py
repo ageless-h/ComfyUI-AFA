@@ -9,7 +9,17 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.append(current_dir)
 
-from blend_modes import BlendModes
+# 使用相对导入避免与系统包冲突
+try:
+    from .blend_modes import BlendModes
+except ImportError:
+    # 如果相对导入失败，尝试直接导入本地模块
+    import importlib.util
+    blend_modes_path = os.path.join(current_dir, "blend_modes.py")
+    spec = importlib.util.spec_from_file_location("blend_modes", blend_modes_path)
+    blend_modes_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(blend_modes_module)
+    BlendModes = blend_modes_module.BlendModes
 
 
 class PreviewLayerNode:
@@ -33,6 +43,25 @@ class PreviewLayerNode:
         """预览单个图层，输出图层的效果图"""
         # 参数映射
         layer = kwargs.get("图层")
+        
+        # 检查图层是否为None
+        if layer is None:
+            print("⚠️ 警告：接收到空的图层数据，返回默认图像")
+            # 创建默认的错误提示图像
+            error_image = Image.new("RGB", (256, 256), (255, 128, 128))  # 浅红色背景
+            image_array = np.array(error_image).astype(np.float32) / 255.0
+            image_tensor = torch.from_numpy(image_array)[None,]
+            return (image_tensor,)
+        
+        # 检查图层是否为字典类型
+        if not isinstance(layer, dict):
+            print(f"⚠️ 警告：图层数据类型错误，期望dict，实际为{type(layer)}，返回默认图像")
+            # 创建默认的错误提示图像
+            error_image = Image.new("RGB", (256, 256), (255, 128, 128))  # 浅红色背景
+            image_array = np.array(error_image).astype(np.float32) / 255.0
+            image_tensor = torch.from_numpy(image_array)[None,]
+            return (image_tensor,)
+        
         # 检查图层可见性
         visible = layer.get("visible", True)
         if not visible:

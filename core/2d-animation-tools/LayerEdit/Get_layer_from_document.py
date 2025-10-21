@@ -25,15 +25,15 @@ class GetLayerFromDocumentNode:
             # 如果指定了图层ID，使用ID查找
             if 图层ID >= 0:
                 # 按图层ID查找
-                for layer in document.layers:
+                for layer in document["layers"]:
                     if layer.get("layer_id") == 图层ID:
                         return (layer,)
                 print(f"未找到ID为 {图层ID} 的图层")
                 return (None,)
             
             # 如果图层ID为-1，返回第一个图层
-            if document.layers:
-                return (document.layers[0],)
+            if document["layers"]:
+                return (document["layers"][0],)
             else:
                 print("文档中没有图层")
                 return (None,)
